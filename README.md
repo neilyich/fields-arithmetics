@@ -1,2 +1,1 @@
-# fields-arithmetics
-Core Fields Arithmetics Project
+# Core Fields Arithmetics Project
