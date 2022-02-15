@@ -10,7 +10,7 @@ import neilyich.field.util.PrimePolynomialUtils
 
 class FieldFactory {
     companion object {
-        private val literals = "xyzabcdefghijklmnopqrstuvw"
+        private const val literals = "xyzabcdefghijklmnopqrstuvw"
     }
     fun primeField(p: Int): Field<PrimeFieldElement> = PrimeField(p)
 

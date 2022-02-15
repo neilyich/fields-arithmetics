@@ -20,6 +20,8 @@ abstract class Field<Element: FieldElement> {
     abstract fun extensionDegree(): Int
     abstract fun size(): Int
 
+    abstract fun innerField(): Field<out FieldElement>?
+
     fun multiplicativeGroup(): Set<Element> = (1 until size()).map { element(it) }.toSet()
 
     protected fun checkSameField(lhs: Element, rhs: Element) {

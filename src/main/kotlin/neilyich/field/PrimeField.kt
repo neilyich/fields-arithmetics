@@ -1,5 +1,6 @@
 package neilyich.field
 
+import neilyich.field.element.FieldElement
 import neilyich.field.util.NumberUtils
 import neilyich.field.element.PrimeFieldElement
 
@@ -66,5 +67,7 @@ class PrimeField(p: Int): Field<PrimeFieldElement>() {
     override fun toString(): String {
         return "Z$p"
     }
+
+    override fun innerField(): Field<out FieldElement>? = null
 
 }

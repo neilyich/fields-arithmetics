@@ -8,6 +8,8 @@ class PolynomialFieldElement<CoefsFieldElement: FieldElement>(field: Field<out P
 
     override fun isOne(): Boolean = polynomial.degree() == 0 && polynomial[0].isOne()
 
+    override fun number(): Int = discreteLogarithm ?: -1
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PolynomialFieldElement<*>) return false

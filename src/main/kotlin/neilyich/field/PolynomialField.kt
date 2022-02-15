@@ -17,12 +17,9 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
     private val polynomialsMapping: Map<AFieldPolynomial<InnerFieldElement>, PolynomialFieldElement<InnerFieldElement>>
 
     init {
-        println("building field")
-        println(mod.toString())
         discreteLogarithmsMapping = mutableMapOf()
         polynomialsMapping = mutableMapOf()
         val primitiveElement = PrimePolynomialUtils.findPrimitiveElement(mod)
-        println(primitiveElement.toString())
         this.primitiveElement = PolynomialFieldElement(this, primitiveElement, 1)
         var currentElement: AFieldPolynomial<InnerFieldElement> = OnePolynomial(innerField, literal)
         for (pow in 0 until size() - 1) {
@@ -35,7 +32,7 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
         polynomialsMapping[zero.polynomial] = zero
     }
 
-    override fun zero(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, ZeroPolynomial(innerField))
+    override fun zero(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, ZeroPolynomial(innerField, literal))
 
     override fun one(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, FieldPolynomial(innerField, mapOf(0 to innerField.one()), literal), 0)
 
@@ -94,8 +91,6 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
         if (other !is PolynomialField<*>) return false
 
         if (mod != other.mod) return false
-        if (discreteLogarithmsMapping != other.discreteLogarithmsMapping) return false
-        if (polynomialsMapping != other.polynomialsMapping) return false
 
         return true
     }
@@ -110,5 +105,7 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
     override fun toString(): String {
         return "{ GF${characteristics()}^${extensionDegree()} ~ $innerField[${mod.literal}]/($mod) }"
     }
+
+    override fun innerField(): Field<out FieldElement> = innerField
 
 }

@@ -22,7 +22,7 @@ abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Fiel
     abstract fun shift(n: Int): AFieldPolynomial<CoefsFieldElement>
     abstract fun mult(e: CoefsFieldElement): AFieldPolynomial<CoefsFieldElement>
 
-    fun pow(n: Int, mod: AFieldPolynomial<CoefsFieldElement>?): AFieldPolynomial<CoefsFieldElement> {
+    fun pow(n: Int, mod: AFieldPolynomial<CoefsFieldElement>? = null): AFieldPolynomial<CoefsFieldElement> {
         if (n <= 0) {
             throw IllegalArgumentException("exponent must be positive")
         }

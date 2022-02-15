@@ -19,6 +19,8 @@ class PrimeFieldElement(field: Field<out PrimeFieldElement>, value: Int) : Field
 
     override fun isOne(): Boolean = value == 1
 
+    override fun number(): Int = value
+
     override fun toString(): String {
         return value.toString()
     }
