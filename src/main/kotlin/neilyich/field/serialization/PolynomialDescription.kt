@@ -1,3 +1,3 @@
 package neilyich.field.serialization
 
-internal data class PolynomialDescription(val coefs: List<PolynomialCoefDescription>)
+data class PolynomialDescription(val coefsField: FieldDescription, val coefs: List<PolynomialCoefDescription>, val literal: String)

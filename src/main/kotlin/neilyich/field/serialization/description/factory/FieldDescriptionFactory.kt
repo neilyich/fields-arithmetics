@@ -4,6 +4,6 @@ import neilyich.field.Field
 import neilyich.field.element.FieldElement
 import neilyich.field.serialization.FieldDescription
 
-internal interface FieldDescriptionFactory {
+interface FieldDescriptionFactory {
     fun createFieldDescription(field: Field<out FieldElement>): FieldDescription
 }

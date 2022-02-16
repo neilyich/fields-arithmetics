@@ -1,3 +1,3 @@
 package neilyich.field.serialization
 
-internal data class FieldDescription(val type: FieldType, val mod: Int?, val innerField: FieldDescription?, val polynomialMod: PolynomialDescription?)
+data class FieldDescription(val type: FieldType, val mod: Int?, val polynomialMod: PolynomialDescription?, val readableDescription: String)
