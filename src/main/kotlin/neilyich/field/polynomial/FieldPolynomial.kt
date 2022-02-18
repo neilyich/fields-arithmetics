@@ -12,6 +12,9 @@ class FieldPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldEl
         }
     }
 
+    constructor(field: Field<CoefsFieldElement>, vararg coefsList: CoefsFieldElement): this(field, coefsList.mapIndexed{ i, c -> (coefsList.size - 1 - i) to c }.toMap()) {
+    }
+
     override fun degree(): Int = degree
     override fun coefs(): Map<Int, CoefsFieldElement> = coefs
 

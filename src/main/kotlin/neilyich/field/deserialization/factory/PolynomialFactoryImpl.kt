@@ -9,7 +9,7 @@ import neilyich.field.serialization.PolynomialDescription
 class PolynomialFactoryImpl : PolynomialFactory {
 
     override fun <Element: FieldElement> createPolynomial(polynomialDescription: PolynomialDescription, field: Field<Element>): AFieldPolynomial<Element> {
-        val coefs = polynomialDescription.coefs.associate { it.pow to field.element(it.n) }
+        val coefs = polynomialDescription.coefs.associate { it.pow to field.element(it.discreteLogarithm) }
         return FieldPolynomial(field, coefs, polynomialDescription.literal)
     }
 

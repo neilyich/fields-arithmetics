@@ -1,28 +1,39 @@
 package neilyich.field
 
 import neilyich.field.element.FieldElement
+import neilyich.ring.UnitalRing
 
-abstract class Field<Element: FieldElement> {
-    abstract fun zero(): Element
-    abstract fun one(): Element
-    abstract fun element(n: Int): Element
+abstract class Field<Element: FieldElement>: UnitalRing<Element>() {
+    abstract override fun zero(): Element
+    abstract override fun one(): Element
 
-    abstract fun add(lhs: Element, rhs: Element): Element
-    abstract fun mult(lhs: Element, rhs: Element): Element
+    abstract override fun add(lhs: Element, rhs: Element): Element
+    abstract override fun mult(lhs: Element, rhs: Element): Element
 
-    fun sub(lhs: Element, rhs: Element): Element = this.add(lhs, this.inverseAdd(rhs))
+    abstract override fun inverseAdd(e: Element): Element
+
+    abstract override fun size(): Int
+
+    override fun iterator(): Iterator<Element> = FieldIterator()
+
+    // element(null) = 0, element(0) = 1, ...
+    abstract fun element(discreteLogarithm: Int?): Element
     fun div(lhs: Element, rhs: Element): Element = this.mult(lhs, this.inverseMult(rhs))
 
-    abstract fun inverseAdd(e: Element): Element
     abstract fun inverseMult(e: Element): Element
 
     abstract fun characteristics(): Int
     abstract fun extensionDegree(): Int
-    abstract fun size(): Int
 
     abstract fun innerField(): Field<out FieldElement>?
 
-    fun multiplicativeGroup(): Set<Element> = (1 until size()).map { element(it) }.toSet()
+    private val multiplicativeGroup: Iterable<Element> by lazy { createMultiplicativeGroup() }
+
+    fun multiplicativeGroup(): Iterable<Element> = multiplicativeGroup
+
+    protected open fun createMultiplicativeGroup(): Iterable<Element> = (0 until size() - 1).map{ element(it) }.toList()
+
+    override fun createElements(): Iterable<Element> = listOf(zero()) + multiplicativeGroup()
 
     protected fun checkSameField(lhs: Element, rhs: Element) {
         if (lhs.field != rhs.field || this != lhs.field || this != rhs.field) {
@@ -34,5 +45,23 @@ abstract class Field<Element: FieldElement> {
         if (e.field != this) {
             throw IllegalArgumentException("elements must be from equal fields")
         }
+    }
+
+    private inner class FieldIterator: Iterator<Element> {
+        private var currentElement = this@Field.zero()
+        private var hasNext = true
+
+        override fun hasNext(): Boolean = hasNext
+
+        override fun next(): Element {
+            if (currentElement.discreteLogarithm() == this@Field.size() - 2) {
+                hasNext = false
+                return currentElement
+            }
+            val result = currentElement
+            currentElement = this@Field.element((currentElement.discreteLogarithm() ?: -1) + 1)
+            return result
+        }
+
     }
 }

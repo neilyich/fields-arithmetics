@@ -1,4 +1,4 @@
-package neilyich.field.util
+package neilyich.util
 
 import neilyich.field.Field
 import neilyich.field.element.FieldElement
@@ -7,16 +7,16 @@ import neilyich.field.polynomial.OnePolynomial
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class PrimePolynomialUtils {
+class FieldPolynomialUtils {
     companion object {
-        private fun <CoefsFieldElement: FieldElement> isPrime(polynomial: AFieldPolynomial<CoefsFieldElement>): Boolean {
+        fun <CoefsFieldElement: FieldElement> isPrime(polynomial: AFieldPolynomial<CoefsFieldElement>): Boolean {
             var prime = true
-            forAllPolynomials(polynomial.field, polynomial.degree() / 2 + polynomial.degree() % 2) {
+            forAllPolynomialsUntil(polynomial.field, 1..polynomial.degree() / 2) {
                 if ((polynomial % it).isZero()) {
                     prime = false
-                    return@forAllPolynomials true
+                    return@forAllPolynomialsUntil true
                 }
-                return@forAllPolynomials false
+                return@forAllPolynomialsUntil false
             }
             return prime
         }
@@ -30,7 +30,7 @@ class PrimePolynomialUtils {
             }
             var primitiveElement: AFieldPolynomial<CoefsFieldElement>? = null
             val dividers = findMaxDividers(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
-            forAllPolynomials(polynomial.field, polynomial.degree() - 1, polynomial.literal) {
+            forAllPolynomialsUntil(polynomial.field, 0 until polynomial.degree(), polynomial.literal) {
                 var primitive = true
                 for (divider in dividers) {
                     if (it.pow(divider, polynomial).isOne()) {
@@ -40,21 +40,21 @@ class PrimePolynomialUtils {
                 }
                 if (primitive) {
                     primitiveElement = it
-                    return@forAllPolynomials true
+                    return@forAllPolynomialsUntil true
                 }
-                return@forAllPolynomials false
+                return@forAllPolynomialsUntil false
             }
             return primitiveElement ?: throw IllegalArgumentException("polynomial is prime but has no primitive elements (fatal): $polynomial")
         }
 
         fun <CoefsFieldElement: FieldElement> findPrimitivePolynomial(field: Field<CoefsFieldElement>, degree: Int, literal: String = "x"): AFieldPolynomial<CoefsFieldElement> {
             var primitivePolynomial: AFieldPolynomial<CoefsFieldElement>? = null
-            iterateAllPolynomials(field, degree, literal) {
+            iterateAllPolynomialsUntil(field, degree, literal) {
                 if (isPrimitive(it)) {
                     primitivePolynomial = it
-                    return@iterateAllPolynomials true
+                    return@iterateAllPolynomialsUntil true
                 }
-                return@iterateAllPolynomials false
+                return@iterateAllPolynomialsUntil false
             }
             return primitivePolynomial ?: throw IllegalArgumentException("no primitive polynomials of degree=$degree, field=$field")
         }
@@ -74,28 +74,45 @@ class PrimePolynomialUtils {
             return true
         }
 
-        fun <CoefsFieldElement: FieldElement> forAllPolynomials(field: Field<CoefsFieldElement>, maxDegree: Int, literal: String = "x", canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean) {
-            for (degree in 1..maxDegree) {
-                if(iterateAllPolynomials(field, degree, literal, canStop)) return
+        fun <CoefsFieldElement: FieldElement> forAllPolynomials(field: Field<CoefsFieldElement>, degreeRange: IntRange, literal: String = "x", action: (AFieldPolynomial<CoefsFieldElement>) -> Unit) {
+            forAllPolynomialsUntil(field, degreeRange, literal) {
+                action(it)
+                return@forAllPolynomialsUntil false
             }
         }
 
-        private fun <CoefsFieldElement: FieldElement> iterateAllPolynomials(field: Field<CoefsFieldElement>, degree: Int, literal: String = "x", canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean): Boolean {
-            val basePolynomial = OnePolynomial(field, literal).shift(degree)
-            if (canStop(basePolynomial)) return true
-            return iterateAllPolynomials(basePolynomial, degree - 1, field.multiplicativeGroup(), canStop)
+        fun <CoefsFieldElement: FieldElement> forAllPolynomials(field: Field<CoefsFieldElement>, degree: Int, literal: String = "x", action: (AFieldPolynomial<CoefsFieldElement>) -> Unit) {
+            forAllPolynomialsUntil(field, degree..degree, literal) {
+                action(it)
+                return@forAllPolynomialsUntil false
+            }
         }
 
-        private fun <CoefsFieldElement: FieldElement> iterateAllPolynomials(basePolynomial: AFieldPolynomial<CoefsFieldElement>,
-                                                                            currentDegree: Int, toAdd: Set<CoefsFieldElement>, canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean): Boolean {
+        fun <CoefsFieldElement: FieldElement> forAllPolynomialsUntil(field: Field<CoefsFieldElement>, degreeRange: IntRange, literal: String = "x", canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean) {
+            for (degree in degreeRange) {
+                if(iterateAllPolynomialsUntil(field, degree, literal, canStop)) return
+            }
+        }
+
+        private fun <CoefsFieldElement: FieldElement> iterateAllPolynomialsUntil(field: Field<CoefsFieldElement>, degree: Int, literal: String = "x", canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean): Boolean {
+            val basePolynomial = OnePolynomial(field, literal).shift(degree)
+            if (canStop(basePolynomial)) return true
+            if (degree > 0) {
+                return iterateAllPolynomialsUntil(basePolynomial, degree - 1, field.multiplicativeGroup(), canStop)
+            }
+            return false
+        }
+
+        private fun <CoefsFieldElement: FieldElement> iterateAllPolynomialsUntil(basePolynomial: AFieldPolynomial<CoefsFieldElement>,
+                                                                                 currentDegree: Int, toAdd: Iterable<CoefsFieldElement>, canStop: (AFieldPolynomial<CoefsFieldElement>) -> Boolean): Boolean {
             if (currentDegree > 0) {
-                if (iterateAllPolynomials(basePolynomial, currentDegree - 1, toAdd, canStop)) return true
+                if (iterateAllPolynomialsUntil(basePolynomial, currentDegree - 1, toAdd, canStop)) return true
             }
             for (e in toAdd) {
                 val newBasePolynomial = basePolynomial.with(currentDegree, e)
                 if (canStop(newBasePolynomial)) return true
                 if (currentDegree > 0) {
-                    if (iterateAllPolynomials(newBasePolynomial, currentDegree - 1, toAdd, canStop)) return true
+                    if (iterateAllPolynomialsUntil(newBasePolynomial, currentDegree - 1, toAdd, canStop)) return true
                 }
             }
             return false

@@ -19,7 +19,7 @@ class PrimeFieldElement(field: Field<out PrimeFieldElement>, value: Int) : Field
 
     override fun isOne(): Boolean = value == 1
 
-    override fun number(): Int = value
+    override fun discreteLogarithm(): Int? = if (value == 0) null else value - 1
 
     override fun toString(): String {
         return value.toString()

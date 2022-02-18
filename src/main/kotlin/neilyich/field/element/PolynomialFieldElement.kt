@@ -3,12 +3,12 @@ package neilyich.field.element
 import neilyich.field.Field
 import neilyich.field.polynomial.AFieldPolynomial
 
-class PolynomialFieldElement<CoefsFieldElement: FieldElement>(field: Field<out PolynomialFieldElement<CoefsFieldElement>>, val polynomial: AFieldPolynomial<CoefsFieldElement>, val discreteLogarithm: Int? = null): FieldElement(field) {
+class PolynomialFieldElement<CoefsFieldElement: FieldElement>(field: Field<out PolynomialFieldElement<CoefsFieldElement>>, val polynomial: AFieldPolynomial<CoefsFieldElement>, val discreteLogarithm: Int?): FieldElement(field) {
     override fun isZero(): Boolean = polynomial.isZero()
 
     override fun isOne(): Boolean = polynomial.degree() == 0 && polynomial[0].isOne()
 
-    override fun number(): Int = discreteLogarithm ?: -1
+    override fun discreteLogarithm(): Int? = discreteLogarithm
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

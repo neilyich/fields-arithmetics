@@ -6,7 +6,7 @@ import neilyich.field.polynomial.AFieldPolynomial
 import neilyich.field.polynomial.FieldPolynomial
 import neilyich.field.polynomial.OnePolynomial
 import neilyich.field.polynomial.ZeroPolynomial
-import neilyich.field.util.PrimePolynomialUtils
+import neilyich.util.FieldPolynomialUtils
 import kotlin.math.pow
 
 class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial<InnerFieldElement>): Field<PolynomialFieldElement<InnerFieldElement>>() {
@@ -19,7 +19,7 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
     init {
         discreteLogarithmsMapping = mutableMapOf()
         polynomialsMapping = mutableMapOf()
-        val primitiveElement = PrimePolynomialUtils.findPrimitiveElement(mod)
+        val primitiveElement = FieldPolynomialUtils.findPrimitiveElement(mod)
         this.primitiveElement = PolynomialFieldElement(this, primitiveElement, 1)
         var currentElement: AFieldPolynomial<InnerFieldElement> = OnePolynomial(innerField, literal)
         for (pow in 0 until size() - 1) {
@@ -32,19 +32,20 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
         polynomialsMapping[zero.polynomial] = zero
     }
 
-    override fun zero(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, ZeroPolynomial(innerField, literal))
+    override fun zero(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, ZeroPolynomial(innerField, literal), null)
 
     override fun one(): PolynomialFieldElement<InnerFieldElement> = PolynomialFieldElement(this, FieldPolynomial(innerField, mapOf(0 to innerField.one()), literal), 0)
 
-    override fun element(n: Int): PolynomialFieldElement<InnerFieldElement> {
+    override fun element(discreteLogarithm: Int?): PolynomialFieldElement<InnerFieldElement> {
+        discreteLogarithm ?: return zero()
         val aN: Int
         val mod = size() - 1
-        aN = if (n < 0) {
-            n % mod + mod
+        aN = if (discreteLogarithm < 0) {
+            discreteLogarithm % mod + mod
         } else {
-            n % mod
+            discreteLogarithm % mod
         }
-        return discreteLogarithmsMapping.getOrElse(aN) { throw IllegalArgumentException("no element with discrete logarithm $aN") }
+        return discreteLogarithmsMapping.getOrElse(aN) { throw IllegalArgumentException("no element with discrete logarithm $discreteLogarithm ~ $aN") }
     }
 
     private fun getElementByPolynomial(_polynomial: AFieldPolynomial<InnerFieldElement>): PolynomialFieldElement<InnerFieldElement> {
@@ -103,7 +104,7 @@ class PolynomialField<InnerFieldElement: FieldElement>(val mod: AFieldPolynomial
     }
 
     override fun toString(): String {
-        return "{ GF${characteristics()}^${extensionDegree()} ~ $innerField[${mod.literal}]/($mod) }"
+        return "{ GF${characteristics()}^${extensionDegree()} ~ $innerField[$literal]/($mod) }"
     }
 
     override fun innerField(): Field<out FieldElement> = innerField

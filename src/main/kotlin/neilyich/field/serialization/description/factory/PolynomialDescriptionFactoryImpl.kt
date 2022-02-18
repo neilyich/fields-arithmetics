@@ -10,7 +10,7 @@ class PolynomialDescriptionFactoryImpl : PolynomialDescriptionFactory {
     override fun createPolynomialDescription(polynomial: AFieldPolynomial<out FieldElement>, fieldDescription: FieldDescription): PolynomialDescription {
         val coefs = mutableListOf<PolynomialCoefDescription>()
         for ((pow, coef) in polynomial.coefs().entries.sortedBy{ (k, _) -> k }) {
-            if (!coef.isZero()) coefs.add(PolynomialCoefDescription(pow, coef.number()))
+            if (!coef.isZero()) coefs.add(PolynomialCoefDescription(pow, coef.discreteLogarithm()))
         }
         return PolynomialDescription(fieldDescription, coefs, polynomial.literal)
     }

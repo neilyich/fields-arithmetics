@@ -1,7 +1,7 @@
 package neilyich.field
 
 import neilyich.field.element.FieldElement
-import neilyich.field.util.NumberUtils
+import neilyich.util.NumberUtils
 import neilyich.field.element.PrimeFieldElement
 
 class PrimeField(p: Int): Field<PrimeFieldElement>() {
@@ -18,7 +18,8 @@ class PrimeField(p: Int): Field<PrimeFieldElement>() {
 
     override fun one(): PrimeFieldElement = PrimeFieldElement(this, 1)
 
-    override fun element(n: Int): PrimeFieldElement = PrimeFieldElement(this, n)
+    override fun element(discreteLogarithm: Int?): PrimeFieldElement = this(discreteLogarithm?.let { it + 1 } ?: 0)
+    operator fun invoke(n: Int): PrimeFieldElement = PrimeFieldElement(this, n)
 
     override fun add(lhs: PrimeFieldElement, rhs: PrimeFieldElement): PrimeFieldElement {
         checkSameField(lhs, rhs)

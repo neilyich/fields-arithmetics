@@ -7,7 +7,9 @@ import neilyich.field.element.FieldElement
 import neilyich.field.serialization.FieldDescription
 import neilyich.field.serialization.FieldType
 
-class FieldFactoryImpl(private val polynomialFactory: PolynomialFactory): FieldFactory {
+class FieldFactoryImpl(
+    private val polynomialFactory: PolynomialFactory = PolynomialFactoryImpl()
+): FieldFactory {
 
     override fun createField(fieldDescription: FieldDescription): Field<out FieldElement> {
         return createFieldRecursively(fieldDescription)

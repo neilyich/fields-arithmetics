@@ -2,8 +2,9 @@ package neilyich.field.polynomial
 
 import neilyich.field.Field
 import neilyich.field.element.FieldElement
+import neilyich.ring.element.UnitalRingElement
 
-abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Field<CoefsFieldElement>, val literal: String = "x") {
+abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Field<CoefsFieldElement>, val literal: String = "x"): UnitalRingElement {
     private var string: String = ""
 
     abstract fun coefs(): Map<Int, CoefsFieldElement>
@@ -43,8 +44,8 @@ abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Fiel
         return result
     }
 
-    fun isZero(): Boolean = degree() == 0 && this[0].isZero()
-    fun isOne(): Boolean = degree() == 0 && this[0].isOne()
+    override fun isZero(): Boolean = degree() == 0 && this[0].isZero()
+    override fun isOne(): Boolean = degree() == 0 && this[0].isOne()
 
     final override fun toString(): String {
         if (string.isNotEmpty()) {

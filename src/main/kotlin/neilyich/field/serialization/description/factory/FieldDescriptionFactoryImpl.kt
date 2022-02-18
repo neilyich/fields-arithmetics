@@ -6,7 +6,10 @@ import neilyich.field.element.FieldElement
 import neilyich.field.serialization.FieldDescription
 import neilyich.field.serialization.FieldType
 
-class FieldDescriptionFactoryImpl(private val polynomialDescriptionFactory: PolynomialDescriptionFactory) : FieldDescriptionFactory {
+class FieldDescriptionFactoryImpl(
+    private val polynomialDescriptionFactory: PolynomialDescriptionFactory = PolynomialDescriptionFactoryImpl()
+) : FieldDescriptionFactory {
+
     override fun createFieldDescription(field: Field<out FieldElement>): FieldDescription {
         val innerField = field.innerField()
             ?: return FieldDescription(FieldType.PRIME, field.characteristics(), null, field.toString())
