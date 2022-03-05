@@ -4,6 +4,13 @@ import neilyich.field.Field
 import neilyich.field.element.FieldElement
 import neilyich.ring.element.UnitalRingElement
 
+fun <CoefsFieldElement: FieldElement> x(field: Field<CoefsFieldElement>, literal: String = "x"):
+        AFieldPolynomial<CoefsFieldElement> = x(field, 1, literal)
+
+fun <CoefsFieldElement: FieldElement> x(field: Field<CoefsFieldElement>, pow: Int, literal: String = "x"):
+        AFieldPolynomial<CoefsFieldElement> = OnePolynomial(field, literal).shift(pow)
+
+
 abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Field<CoefsFieldElement>, val literal: String = "x"): UnitalRingElement {
     private var string: String = ""
 
@@ -17,18 +24,24 @@ abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Fiel
     operator fun minus(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> = plus(-other)
     abstract operator fun times(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement>
     abstract fun divide(other: AFieldPolynomial<CoefsFieldElement>): Pair<AFieldPolynomial<CoefsFieldElement>, AFieldPolynomial<CoefsFieldElement>>
-    operator fun div(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> = divide(other).first
-    operator fun rem(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> = divide(other).second
+    open operator fun div(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> = divide(other).first
+    open operator fun rem(other: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> = divide(other).second
 
     abstract fun shift(n: Int): AFieldPolynomial<CoefsFieldElement>
     abstract fun mult(e: CoefsFieldElement): AFieldPolynomial<CoefsFieldElement>
 
+    abstract fun normalized(): AFieldPolynomial<CoefsFieldElement>
+    abstract fun reverse(): AFieldPolynomial<CoefsFieldElement>
+
     fun pow(n: Int, mod: AFieldPolynomial<CoefsFieldElement>? = null): AFieldPolynomial<CoefsFieldElement> {
-        if (n <= 0) {
-            throw IllegalArgumentException("exponent must be positive")
+        if (n < 0) {
+            throw IllegalArgumentException("exponent must be non negative")
+        }
+        if (n == 0) {
+            return OnePolynomial(field, literal)
         }
         if (n == 1) {
-            return this
+            return if (mod == null) this else this % mod
         }
         var result = this
         val binaryString = n.toString(2)

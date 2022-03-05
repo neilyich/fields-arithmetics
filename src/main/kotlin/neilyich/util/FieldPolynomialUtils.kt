@@ -3,22 +3,30 @@ package neilyich.util
 import neilyich.field.Field
 import neilyich.field.element.FieldElement
 import neilyich.field.polynomial.AFieldPolynomial
+import neilyich.field.polynomial.FieldPolynomial
 import neilyich.field.polynomial.OnePolynomial
+import neilyich.field.polynomial.ZeroPolynomial
 import kotlin.math.pow
 import kotlin.math.sqrt
 
 class FieldPolynomialUtils {
     companion object {
         fun <CoefsFieldElement: FieldElement> isPrime(polynomial: AFieldPolynomial<CoefsFieldElement>): Boolean {
-            var prime = true
-            forAllPolynomialsUntil(polynomial.field, 1..polynomial.degree() / 2) {
-                if ((polynomial % it).isZero()) {
-                    prime = false
-                    return@forAllPolynomialsUntil true
-                }
-                return@forAllPolynomialsUntil false
+            if (polynomial.degree() == 1) {
+                return true
             }
-            return prime
+            val q = polynomial.field.size()
+            val x = OnePolynomial(polynomial.field, polynomial.literal).shift(1)
+            if (polynomial.normalized() != GCD(x.pow(q.toDouble().pow(polynomial.degree()).toInt(), polynomial) - x, polynomial).normalized()) {
+                return false
+            }
+            val dividers = findSubExtensionDegrees(polynomial.degree())
+            for (d in dividers) {
+                if (GCD(x.pow(q.toDouble().pow(d).toInt(), polynomial) - x, polynomial).degree() != 0) {
+                    return false
+                }
+            }
+            return true
         }
 
         fun <CoefsFieldElement: FieldElement> findPrimitiveElement(polynomial: AFieldPolynomial<CoefsFieldElement>): AFieldPolynomial<CoefsFieldElement> {
@@ -26,10 +34,27 @@ class FieldPolynomialUtils {
                 throw IllegalArgumentException("polynomial must be prime: $polynomial")
             }
             if (isPrimitive(polynomial)) {
-                return OnePolynomial(polynomial.field, polynomial.literal).shift(1)
+                if (polynomial.degree() > 1) {
+                    return OnePolynomial(polynomial.field, polynomial.literal).shift(1)
+                }
+                val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
+                for (e in polynomial.field.multiplicativeGroup()) {
+                    val pol = FieldPolynomial(polynomial.field, polynomial.literal, 0 to e)
+                    var primitive = true
+                    for (divider in dividers) {
+                        if (pol.pow(divider, polynomial).isOne()) {
+                            primitive = false
+                            break
+                        }
+                    }
+                    if (primitive) {
+                        return pol
+                    }
+                }
+                throw IllegalArgumentException("could not find primitive element for polynomial with degree <= 1: $polynomial")
             }
             var primitiveElement: AFieldPolynomial<CoefsFieldElement>? = null
-            val dividers = findMaxDividers(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
+            val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
             forAllPolynomialsUntil(polynomial.field, 0 until polynomial.degree(), polynomial.literal) {
                 var primitive = true
                 for (divider in dividers) {
@@ -63,7 +88,7 @@ class FieldPolynomialUtils {
             if (!isPrime(polynomial)) {
                 return false
             }
-            val dividers = findMaxDividers(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
+            val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
             val x = OnePolynomial(polynomial.field).shift(1)
             for (divider in dividers) {
                 val xPow = x.pow(divider, polynomial)
@@ -118,7 +143,7 @@ class FieldPolynomialUtils {
             return false
         }
 
-        private fun findMaxDividers(_n: Int): Set<Int> {
+        private fun findSubExtensionDegrees(_n: Int): Set<Int> {
             val dividers = mutableSetOf<Int>()
             var n = _n
             var divider = 2
@@ -131,7 +156,67 @@ class FieldPolynomialUtils {
                 if (divider == 2) divider++
                 else divider += 2
             }
+            if (dividers.isEmpty()) {
+                dividers.add(1)
+            }
             return dividers
+        }
+
+        fun <CoefsFieldElement: FieldElement> extendedEuclidAlgorithm(_a: AFieldPolynomial<CoefsFieldElement>,
+                                                                      _b: AFieldPolynomial<CoefsFieldElement>):
+                Triple<
+                        AFieldPolynomial<CoefsFieldElement>,
+                        AFieldPolynomial<CoefsFieldElement>,
+                        AFieldPolynomial<CoefsFieldElement>> {
+            if (_a.field != _b.field || _a.literal != _b.literal) {
+                throw IllegalArgumentException("unable to execute euclid algorithm with polynomials on different fields: $_a, $_b")
+            }
+            if (_a.degree() < _b.degree()) {
+                val result = extendedEuclidAlgorithm(_b, _a)
+                return Triple(result.second, result.first, result.third)
+            }
+            var a = _a
+            var b = _b
+            var xa0: AFieldPolynomial<CoefsFieldElement> = OnePolynomial(a.field, a.literal)
+            var xb0: AFieldPolynomial<CoefsFieldElement> = ZeroPolynomial(a.field, a.literal)
+            var xa1: AFieldPolynomial<CoefsFieldElement> = ZeroPolynomial(a.field, a.literal)
+            var xb1: AFieldPolynomial<CoefsFieldElement> = OnePolynomial(a.field, a.literal)
+            var r = OnePolynomial(a.field, a.literal).shift(1)
+            var q: AFieldPolynomial<CoefsFieldElement>
+            while (r.degree() > 0) {
+                r = a % b
+                if (r.isZero()) {
+                    return Triple(xa1, xb1, b)
+                }
+                q = a / b
+                val newXa1 = xa0 - xa1 * q
+                val newXb1 = xb0 - xb1 * q
+                xa0 = xa1
+                xb0 = xb1
+                xa1 = newXa1
+                xb1 = newXb1
+                a = b
+                b = r
+            }
+            return Triple(xa1, xb1, r)
+
+        }
+
+        // greatest common divisor
+        fun <CoefsFieldElement: FieldElement> GCD(a: AFieldPolynomial<CoefsFieldElement>,
+                                                  b: AFieldPolynomial<CoefsFieldElement>):
+                AFieldPolynomial<CoefsFieldElement> {
+
+            if (a.isZero() && !b.isZero()) {
+                return b
+            }
+            if (b.isZero() && !a.isZero()) {
+                return a
+            }
+            if (a.isZero() && b.isZero()) {
+                return ZeroPolynomial(a.field, literal = a.literal)
+            }
+            return extendedEuclidAlgorithm(a, b).third
         }
     }
 }

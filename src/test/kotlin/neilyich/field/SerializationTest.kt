@@ -2,7 +2,9 @@ package neilyich.field
 
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import neilyich.field.element.CachingPolynomialFieldElement
 import neilyich.field.element.FieldElement
+import neilyich.field.element.PrimeFieldElement
 import neilyich.field.polynomial.AFieldPolynomial
 import neilyich.field.polynomial.FieldPolynomial
 import neilyich.field.serialization.FieldsModule
@@ -49,7 +51,7 @@ class SerializationTest {
         ).forEach { 
             testSerializationAndDeserialization(it)
         }
-        val g = FieldUtils.extend(f, 2)
+        val g = FieldUtils.extend(f, 2) as CachingPolynomialField<CachingPolynomialFieldElement<PrimeFieldElement>>
         listOf(
             FieldPolynomial(g, g.element(1), g.element(100), g.element(11)),
             FieldPolynomial(g, g.element(1), g.element(14), g.element(26)),
@@ -74,7 +76,7 @@ class SerializationTest {
         ).forEach {
             testSerializationAndDeserialization(PolynomialRing(it))
         }
-        val g = FieldUtils.extend(f, 2)
+        val g = FieldUtils.extend(f, 2) as CachingPolynomialField<CachingPolynomialFieldElement<PrimeFieldElement>>
         listOf(
             FieldPolynomial(g, g.element(1), g.element(100), g.element(11)),
             FieldPolynomial(g, g.element(1), g.element(14), g.element(26)),

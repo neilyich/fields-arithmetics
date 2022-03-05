@@ -39,7 +39,7 @@ class PolynomialRing<Coef: FieldElement>(val mod: AFieldPolynomial<Coef>): Unita
     override fun contains(e: AFieldPolynomial<Coef>): Boolean = coefsField == e.field && e.degree() < mod.degree()
 
     override fun toString(): String {
-        return "$coefsField[$literal]"
+        return "$coefsField[$literal]/($mod)"
     }
 
     override fun equals(other: Any?): Boolean {

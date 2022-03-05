@@ -10,6 +10,13 @@ open class FieldTest: UnitalRingTest() {
     protected fun <Element: FieldElement> checkFieldAxioms(field: Field<Element>) {
         checkUnitalRingAxioms(field)
 
+        var expectedDiscreteLog: Int? = null
+        for (a in field) {
+            val actualDiscreteLog = a.discreteLogarithm()
+            assertEquals(expectedDiscreteLog, actualDiscreteLog)
+            expectedDiscreteLog = (expectedDiscreteLog ?: -1) + 1
+        }
+
         assertEquals(field.element(null), field.zero())
         assertEquals(field.element(0), field.one())
 
@@ -22,7 +29,7 @@ open class FieldTest: UnitalRingTest() {
         for (a in field.multiplicativeGroup()) {
             // a != 0 => a^-1: a * a^-1 = 1
             val invA = field.inverseMult(a)
-            assertTrue(field.mult(a, invA).isOne())
+            assertTrue(field.mult(a, invA).isOne(), "$a, $invA, $field")
             assertTrue(field.mult(invA, a).isOne())
         }
     }

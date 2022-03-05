@@ -28,4 +28,8 @@ class ZeroPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldEle
     override fun shift(n: Int): AFieldPolynomial<CoefsFieldElement> = this
 
     override fun mult(e: CoefsFieldElement): AFieldPolynomial<CoefsFieldElement> = this
+
+    override fun normalized(): AFieldPolynomial<CoefsFieldElement> = this
+
+    override fun reverse(): AFieldPolynomial<CoefsFieldElement> = this
 }

@@ -9,11 +9,16 @@ class PolynomialFieldTest: FieldTest() {
     fun test() {
         val f = PrimeField(5)
         listOf(
-            FieldPolynomial(f, f(1), f(0), f(2)),
+            FieldPolynomial(f, f(1), f(2)),
             FieldPolynomial(f, f(1), f(4), f(2)),
+        ).forEach {
+            checkFieldAxioms(CachingPolynomialField(it))
+            checkFieldAxioms(NoCachePolynomialField(it))
+        }
+        listOf(
             FieldPolynomial(f, f(1), f(1), f(0), f(2)),
         ).forEach {
-            checkFieldAxioms(PolynomialField(it))
+            checkFieldAxioms(CachingPolynomialField(it))
         }
 
         listOf(
@@ -22,7 +27,8 @@ class PolynomialFieldTest: FieldTest() {
             FieldPolynomial(f, f(1), f(4), f(3)),
         ).forEach {
             assertThrows<IllegalArgumentException> {
-                PolynomialField(it)
+                CachingPolynomialField(it)
+                NoCachePolynomialField(it)
             }
         }
     }

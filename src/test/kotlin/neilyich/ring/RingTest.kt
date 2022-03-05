@@ -9,7 +9,7 @@ open class RingTest {
         var count = 0
         val elements = mutableSetOf<Element>()
         for (el in ring) {
-            assertTrue(ring.contains(el))
+            assertTrue(ring.contains(el), el.toString())
             count++
             elements.add(el)
         }
@@ -38,25 +38,25 @@ open class RingTest {
             assertTrue(ring.add(minusA, a).isZero())
 
             for (b in ring) {
-                assertTrue(ring.contains(ring.add(a, b)), "$a, $b")
-                assertTrue(ring.contains(ring.add(b, a)), "$a, $b")
+                assertTrue(ring.contains(ring.add(a, b)), "$a, $b  ---  $ring")
+                assertTrue(ring.contains(ring.add(b, a)), "$a, $b  ---  $ring")
 
-                assertTrue(ring.contains(ring.mult(a, b)), "$a, $b")
-                assertTrue(ring.contains(ring.mult(b, a)), "$a, $b")
+                assertTrue(ring.contains(ring.mult(a, b)), "$a, $b  ---  $ring")
+                assertTrue(ring.contains(ring.mult(b, a)), "$a, $b  ---  $ring")
 
                 // a + b = b + a; ab = ba
-                assertEquals(ring.add(a, b), ring.add(b, a), "$a, $b")
-                assertEquals(ring.mult(a, b), ring.mult(b, a), "$a, $b")
+                assertEquals(ring.add(a, b), ring.add(b, a), "$a, $b  ---  $ring")
+                assertEquals(ring.mult(a, b), ring.mult(b, a), "$a, $b  ---  $ring")
 
                 for (c in ring) {
                     // a + (b + c) = (a + b) + c
-                    assertEquals(ring.add(a, ring.add(b, c)), ring.add(ring.add(a, b), c), "$a, $b, $c")
+                    assertEquals(ring.add(a, ring.add(b, c)), ring.add(ring.add(a, b), c), "$a, $b, $c  ---  $ring")
 
                     // a(bc) = (ab)c
-                    assertEquals(ring.mult(a, ring.mult(b, c)), ring.mult(ring.mult(a, b), c), "$a, $b, $c")
+                    assertEquals(ring.mult(a, ring.mult(b, c)), ring.mult(ring.mult(a, b), c), "$a, $b, $c  ---  $ring")
 
                     // (a + b) * c = ac + bc
-                    assertEquals(ring.mult(ring.add(a, b), c), ring.add(ring.mult(a, c), ring.mult(b, c)), "$a, $b, $c")
+                    assertEquals(ring.mult(ring.add(a, b), c), ring.add(ring.mult(a, c), ring.mult(b, c)), "$a, $b, $c  ---  $ring")
                 }
             }
         }

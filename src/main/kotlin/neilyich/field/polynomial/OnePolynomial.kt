@@ -31,4 +31,8 @@ class OnePolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldElem
     override fun shift(n: Int): AFieldPolynomial<CoefsFieldElement> = with(0, field.zero()).with(n, field.one())
 
     override fun mult(e: CoefsFieldElement): AFieldPolynomial<CoefsFieldElement> = with(0, e)
+
+    override fun normalized(): AFieldPolynomial<CoefsFieldElement> = this
+
+    override fun reverse(): AFieldPolynomial<CoefsFieldElement> = this
 }

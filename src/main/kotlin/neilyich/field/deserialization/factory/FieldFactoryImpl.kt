@@ -1,7 +1,7 @@
 package neilyich.field.deserialization.factory
 
 import neilyich.field.Field
-import neilyich.field.PolynomialField
+import neilyich.field.CachingPolynomialField
 import neilyich.field.PrimeField
 import neilyich.field.element.FieldElement
 import neilyich.field.serialization.FieldDescription
@@ -21,6 +21,6 @@ class FieldFactoryImpl(
         }
         val polynomialCoefsField = createFieldRecursively(fieldDescription.polynomialMod!!.coefsField)
         val polynomial = polynomialFactory.createPolynomial(fieldDescription.polynomialMod, polynomialCoefsField)
-        return PolynomialField(polynomial)
+        return CachingPolynomialField(polynomial)
     }
 }
