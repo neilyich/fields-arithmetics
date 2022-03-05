@@ -16,6 +16,8 @@ abstract class Field<Element: FieldElement>: UnitalRing<Element>() {
 
     override fun iterator(): Iterator<Element> = FieldIterator()
 
+    open fun primitiveElement(): Element = element(1)
+
     // element(null) = 0, element(0) = 1, ...
     abstract fun element(discreteLogarithm: Int?): Element
     fun div(lhs: Element, rhs: Element): Element = this.mult(lhs, this.inverseMult(rhs))
@@ -31,7 +33,7 @@ abstract class Field<Element: FieldElement>: UnitalRing<Element>() {
 
     fun multiplicativeGroup(): Iterable<Element> = multiplicativeGroup
 
-    protected open fun createMultiplicativeGroup(): Iterable<Element> = (0 until size() - 1).map{ element(it) }.toList()
+    protected open fun createMultiplicativeGroup(): Iterable<Element> = Iterable { FieldIterator().apply { next() } }
 
     override fun createElements(): Iterable<Element> = listOf(zero()) + multiplicativeGroup()
 
