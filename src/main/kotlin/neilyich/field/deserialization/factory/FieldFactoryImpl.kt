@@ -5,7 +5,6 @@ import neilyich.field.CachingPolynomialField
 import neilyich.field.PrimeField
 import neilyich.field.element.FieldElement
 import neilyich.field.serialization.FieldDescription
-import neilyich.field.serialization.FieldType
 
 class FieldFactoryImpl(
     private val polynomialFactory: PolynomialFactory = PolynomialFactoryImpl()
@@ -16,8 +15,8 @@ class FieldFactoryImpl(
     }
 
     private fun createFieldRecursively(fieldDescription: FieldDescription): Field<out FieldElement> {
-        if (fieldDescription.type == FieldType.PRIME) {
-            return PrimeField(fieldDescription.mod!!)
+        if (fieldDescription.mod != null) {
+            return PrimeField(fieldDescription.mod)
         }
         val polynomialCoefsField = createFieldRecursively(fieldDescription.polynomialMod!!.coefsField)
         val polynomial = polynomialFactory.createPolynomial(fieldDescription.polynomialMod, polynomialCoefsField)

@@ -6,5 +6,5 @@ import neilyich.field.serialization.FieldDescription
 import neilyich.field.serialization.PolynomialDescription
 
 interface PolynomialDescriptionFactory {
-    fun createPolynomialDescription(polynomial: AFieldPolynomial<out FieldElement>, fieldDescription: FieldDescription): PolynomialDescription
+    fun <CoefsFieldElement:FieldElement> createPolynomialDescription(polynomial: AFieldPolynomial<CoefsFieldElement>, fieldDescription: FieldDescription): PolynomialDescription
 }

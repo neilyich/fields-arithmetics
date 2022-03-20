@@ -4,12 +4,13 @@ import neilyich.field.Field
 import neilyich.field.element.FieldElement
 import kotlin.math.max
 
-class FieldPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldElement>, private val coefs: Map<Int, CoefsFieldElement> = mapOf(), literal: String = "x"): AFieldPolynomial<CoefsFieldElement>(field, literal), Cloneable {
+class FieldPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldElement>, coefs: Map<Int, CoefsFieldElement> = mapOf(), literal: String = "x"): AFieldPolynomial<CoefsFieldElement>(field, literal), Cloneable {
+    private val coefs: Map<Int, CoefsFieldElement> = coefs.filterValues { !it.isZero() }
     private val degree: Int = coefs.keys.filter{!coefs[it]!!.isZero()}.maxOrNull() ?: 0
 
     init {
-        if ((coefs.keys.minOrNull() ?: 0) < 0) {
-            throw IllegalArgumentException("polynomial coefs must be non negative")
+        if ((coefs.keys.filter{!coefs[it]!!.isZero()}.minOrNull() ?: 0) < 0) {
+            throw IllegalArgumentException("polynomial coefs must be non negative: $coefs")
         }
     }
 
@@ -24,6 +25,9 @@ class FieldPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldEl
 
     constructor(field: Field<CoefsFieldElement>, vararg coefsPairs: Pair<Int, CoefsFieldElement>):
             this(field, coefsPairs.toMap())
+
+    constructor(field: Field<CoefsFieldElement>, coefs: List<CoefsFieldElement>, literal: String):
+            this(field, coefs.mapIndexed{ i, c -> i to c}.toMap(), literal)
 
     override fun degree(): Int = degree
     override fun coefs(): Map<Int, CoefsFieldElement> = coefs
@@ -250,5 +254,15 @@ class FieldPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldEl
     override fun reverse(): AFieldPolynomial<CoefsFieldElement> {
         val newCoefs = coefs.mapKeys { degree - it.key }
         return FieldPolynomial(field, newCoefs.toMap(), literal)
+    }
+
+    override fun derivative(): AFieldPolynomial<CoefsFieldElement> {
+        val newCoefs = mutableMapOf<Int, CoefsFieldElement>()
+        for ((pow, coef) in coefs) {
+            if (pow > 0) {
+                newCoefs[pow - 1] = field.mult(coef, field.one(pow))
+            }
+        }
+        return FieldPolynomial(field, newCoefs, literal)
     }
 }

@@ -7,10 +7,10 @@ import neilyich.field.serialization.PolynomialCoefDescription
 import neilyich.field.serialization.PolynomialDescription
 
 class PolynomialDescriptionFactoryImpl : PolynomialDescriptionFactory {
-    override fun createPolynomialDescription(polynomial: AFieldPolynomial<out FieldElement>, fieldDescription: FieldDescription): PolynomialDescription {
+    override fun <CoefsFieldElement:FieldElement> createPolynomialDescription(polynomial: AFieldPolynomial<CoefsFieldElement>, fieldDescription: FieldDescription): PolynomialDescription {
         val coefs = mutableListOf<PolynomialCoefDescription>()
         for ((pow, coef) in polynomial.coefs().entries.sortedBy{ (k, _) -> k }) {
-            if (!coef.isZero()) coefs.add(PolynomialCoefDescription(pow, coef.discreteLogarithm()))
+            if (!coef.isZero()) coefs.add(PolynomialCoefDescription(pow, polynomial.field.discreteLogarithm(coef)))
         }
         return PolynomialDescription(fieldDescription, coefs, polynomial.literal)
     }

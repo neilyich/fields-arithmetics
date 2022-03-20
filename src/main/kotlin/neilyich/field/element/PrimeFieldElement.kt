@@ -1,25 +1,14 @@
 package neilyich.field.element
 
 import neilyich.field.Field
+import neilyich.util.NumberUtils
 
-class PrimeFieldElement(field: Field<out PrimeFieldElement>, value: Int) : FieldElement(field) {
-    val value: Int
-
-    init {
-        val p = field.characteristics()
-        if (value < 0) {
-            this.value = value % p + p
-        }
-        else {
-            this.value = value % p
-        }
-    }
+class PrimeFieldElement(field: Field<*>, value: Int) : FieldElement {
+    val value = NumberUtils.mod(value, field.characteristics())
 
     override fun isZero(): Boolean = value == 0
 
     override fun isOne(): Boolean = value == 1
-
-    override fun discreteLogarithm(): Int? = if (value == 0) null else value - 1
 
     override fun toString(): String {
         return value.toString()
