@@ -32,4 +32,6 @@ class ZeroPolynomial<CoefsFieldElement: FieldElement>(field: Field<CoefsFieldEle
     override fun normalized(): AFieldPolynomial<CoefsFieldElement> = this
 
     override fun reverse(): AFieldPolynomial<CoefsFieldElement> = this
+
+    override fun derivative(): AFieldPolynomial<CoefsFieldElement> = this
 }

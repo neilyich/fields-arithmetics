@@ -2,12 +2,12 @@ package neilyich.util
 
 import neilyich.field.Field
 import neilyich.field.element.FieldElement
-import neilyich.field.polynomial.AFieldPolynomial
-import neilyich.field.polynomial.FieldPolynomial
-import neilyich.field.polynomial.OnePolynomial
-import neilyich.field.polynomial.ZeroPolynomial
-import kotlin.math.pow
-import kotlin.math.sqrt
+import neilyich.field.polynomial.*
+import neilyich.util.NumberUtils.Companion.findSubExtensionDegrees
+import neilyich.util.matrix.AFieldMatrix
+import neilyich.util.matrix.MatrixUtils
+import neilyich.util.matrix.VFieldVector
+import neilyich.util.matrix.ZeroFieldMatrix
 
 class FieldPolynomialUtils {
     companion object {
@@ -17,12 +17,12 @@ class FieldPolynomialUtils {
             }
             val q = polynomial.field.size()
             val x = OnePolynomial(polynomial.field, polynomial.literal).shift(1)
-            if (polynomial.normalized() != GCD(x.pow(q.toDouble().pow(polynomial.degree()).toInt(), polynomial) - x, polynomial).normalized()) {
+            if (polynomial.normalized() != GCD(x.pow(q.pow(polynomial.degree()), polynomial) - x, polynomial).normalized()) {
                 return false
             }
             val dividers = findSubExtensionDegrees(polynomial.degree())
             for (d in dividers) {
-                if (GCD(x.pow(q.toDouble().pow(d).toInt(), polynomial) - x, polynomial).degree() != 0) {
+                if (GCD(x.pow(q.pow(d), polynomial) - x, polynomial).degree() != 0) {
                     return false
                 }
             }
@@ -37,7 +37,7 @@ class FieldPolynomialUtils {
                 if (polynomial.degree() > 1) {
                     return OnePolynomial(polynomial.field, polynomial.literal).shift(1)
                 }
-                val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
+                val dividers = findSubExtensionDegrees(polynomial.field.size().pow(polynomial.degree()) - 1)
                 for (e in polynomial.field.multiplicativeGroup()) {
                     val pol = FieldPolynomial(polynomial.field, polynomial.literal, 0 to e)
                     var primitive = true
@@ -54,7 +54,7 @@ class FieldPolynomialUtils {
                 throw IllegalArgumentException("could not find primitive element for polynomial with degree <= 1: $polynomial")
             }
             var primitiveElement: AFieldPolynomial<CoefsFieldElement>? = null
-            val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
+            val dividers = findSubExtensionDegrees(polynomial.field.size().pow(polynomial.degree()) - 1)
             forAllPolynomialsUntil(polynomial.field, 0 until polynomial.degree(), polynomial.literal) {
                 var primitive = true
                 for (divider in dividers) {
@@ -81,15 +81,22 @@ class FieldPolynomialUtils {
                 }
                 return@iterateAllPolynomialsUntil false
             }
-            return primitivePolynomial ?: throw IllegalArgumentException("no primitive polynomials of degree=$degree, field=$field")
+            return primitivePolynomial ?: throw IllegalArgumentException("no primitive normalizedPolynomials of degree=$degree, field=$field")
         }
 
         private fun <CoefsFieldElement: FieldElement> isPrimitive(polynomial: AFieldPolynomial<CoefsFieldElement>): Boolean {
             if (!isPrime(polynomial)) {
                 return false
             }
-            val dividers = findSubExtensionDegrees(polynomial.field.size().toDouble().pow(polynomial.degree()).toInt() - 1)
-            val x = OnePolynomial(polynomial.field).shift(1)
+            val x: AFieldPolynomial<CoefsFieldElement> = if (polynomial.degree() == 1) {
+                if (polynomial[0].isZero()) {
+                    return true
+                }
+                constant(polynomial.field, polynomial.field.inverseAdd(polynomial[0]), polynomial.literal)
+            } else {
+                OnePolynomial(polynomial.field).shift(1)
+            }
+            val dividers = findSubExtensionDegrees(polynomial.field.size().pow(polynomial.degree()) - 1)
             for (divider in dividers) {
                 val xPow = x.pow(divider, polynomial)
                 if (xPow.isOne() || xPow.isZero()) {
@@ -141,25 +148,6 @@ class FieldPolynomialUtils {
                 }
             }
             return false
-        }
-
-        private fun findSubExtensionDegrees(_n: Int): Set<Int> {
-            val dividers = mutableSetOf<Int>()
-            var n = _n
-            var divider = 2
-            val sqrtN = (sqrt(n.toDouble()) + 1).toInt()
-            while (divider < sqrtN) {
-                while (n % divider == 0) {
-                    dividers.add(_n / divider)
-                    n /= divider
-                }
-                if (divider == 2) divider++
-                else divider += 2
-            }
-            if (dividers.isEmpty()) {
-                dividers.add(1)
-            }
-            return dividers
         }
 
         fun <CoefsFieldElement: FieldElement> extendedEuclidAlgorithm(_a: AFieldPolynomial<CoefsFieldElement>,
@@ -216,7 +204,104 @@ class FieldPolynomialUtils {
             if (a.isZero() && b.isZero()) {
                 return ZeroPolynomial(a.field, literal = a.literal)
             }
-            return extendedEuclidAlgorithm(a, b).third
+            return extendedEuclidAlgorithm(a, b).third.normalized()
+        }
+
+        fun <CoefsFieldElement: FieldElement> squareFreePolynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>): Set<AFieldPolynomial<CoefsFieldElement>> {
+            if (polynomial.degree() == 1) {
+                return setOf(polynomial)
+            }
+            val n = polynomial.degree()
+            val field = polynomial.field
+            val q = field.size()
+            val literal = polynomial.literal
+            var remaindersMatrix: AFieldMatrix<CoefsFieldElement> = ZeroFieldMatrix(field, n, 1)
+            for (i in 1 until n) {
+                val xPowIQMinusXPowI = x(field, i * q, literal) - x(field, i, literal)
+                println(xPowIQMinusXPowI)
+                println(xPowIQMinusXPowI % polynomial)
+                remaindersMatrix = remaindersMatrix.concatRight(VFieldVector(field, (xPowIQMinusXPowI % polynomial).coefsList().reversed().startPad(n, field.zero())))
+            }
+            println("Remainders matrix:\n$remaindersMatrix")
+            val dividers = mutableSetOf(polynomial)
+            val basis = MatrixUtils.solve(remaindersMatrix)
+            if (basis.size == 1) {
+                return setOf(polynomial)
+            }
+            println("basis:\n$basis")
+            for (i in 1 until basis.size) {
+                val e = FieldPolynomial(field, basis[i].toList(), literal)
+                println("basis polynomial: $e")
+                val dividersTmp = dividers.toMutableSet()
+                while (dividersTmp.isNotEmpty()) {
+                    var f = dividersTmp.iterator().next()
+                    dividersTmp.remove(f)
+                    for (a in field) {
+                        val d = GCD(f, e - constant(field, a, literal))
+                        if (d.degree() == 0) {
+                            continue
+                        }
+                        if (d.degree() == f.degree()) {
+                            break
+                        }
+                        dividers.remove(f)
+                        dividers.add(d)
+                        dividers.add(f / d)
+                        if (dividers.size == basis.size) {
+                            return if (polynomial.isNormalized())
+                                dividers.map {
+                                    it.normalized()
+                                }.toSet()
+                            else dividers
+                        }
+                        f /= d
+                    }
+                }
+            }
+            throw RuntimeException("Unable to make factorization of polynomial $polynomial")
+        }
+
+        fun <CoefsFieldElement: FieldElement> polynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>): Map<AFieldPolynomial<CoefsFieldElement>, Int> {
+            val derivative = polynomial.derivative()
+            val dividersMultiplicityMap = mutableMapOf<AFieldPolynomial<CoefsFieldElement>, Int>()
+            if (derivative.isZero()) {
+                if (polynomial.degree() == 0) {
+                    return mapOf(polynomial to 1)
+                }
+                val newGCoefs = polynomial.coefs().mapKeys { it.key / polynomial.field.size() }
+                val gFactorization = polynomialFactorization(FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal))
+                for ((fi, ni) in gFactorization) {
+                    dividersMultiplicityMap[fi] = polynomial.field.size() * ni
+                }
+                return dividersMultiplicityMap
+            }
+            println("calc dividers of $polynomial / ${GCD(polynomial, derivative)} = ${polynomial / GCD(polynomial, derivative)}")
+            val dividers = squareFreePolynomialFactorization(polynomial / GCD(polynomial, derivative))
+            println("dividers of $polynomial / ${GCD(polynomial, derivative)} = ${polynomial / GCD(polynomial, derivative)}: $dividers")
+            for (d in dividers) {
+                var nj = 1
+                var fnj = d.pow(nj + 1)
+                while ((polynomial % fnj).isZero()) {
+                    fnj *= d
+                    nj++
+                }
+                dividersMultiplicityMap[d] = nj
+            }
+            var fini: AFieldPolynomial<CoefsFieldElement> = OnePolynomial(polynomial.field, polynomial.literal)
+            for ((fi, ni) in dividersMultiplicityMap) {
+                fini *= fi.pow(ni)
+            }
+            val g = polynomial / fini
+            println("$polynomial / $fini = $g")
+            if (g.degree() == 0) {
+                return dividersMultiplicityMap
+            }
+            val newGCoefs = g.coefs().mapKeys { it.key / polynomial.field.size() }
+            val gFactorization = polynomialFactorization(FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal))
+            for ((fi, ni) in gFactorization) {
+                dividersMultiplicityMap[fi] = polynomial.field.size() * ni
+            }
+            return dividersMultiplicityMap
         }
     }
 }

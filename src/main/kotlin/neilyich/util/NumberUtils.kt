@@ -54,5 +54,53 @@ class NumberUtils {
             }
             return Triple(xa1, xb1, r)
         }
+
+        fun mod(value: Int, mod: Int): Int {
+            if (value < 0) {
+                return value % mod + mod
+            }
+            return value % mod
+        }
+
+        fun findPrimitiveElement(p: Int): Int {
+            if (p == 2) {
+                return 1
+            }
+            val dividers = findSubExtensionDegrees(p - 1)
+            for (i in 2 until p) {
+                var primitive = true
+                for (d in dividers) {
+                    val iPowD = i.modPow(d, p)
+                    if (iPowD == 1 || iPowD == 0) {
+                        primitive = false
+                        break
+                    }
+                }
+                if (primitive) {
+                    return i
+                }
+            }
+            throw IllegalArgumentException("unable to find primitive element mod $p")
+        }
+
+        fun findSubExtensionDegrees(_n: Int): Set<Int> {
+            val dividers = mutableSetOf<Int>()
+            var n = _n
+            var divider = 2
+            val sqrtN = (sqrt(n.toDouble()) + 1).toInt()
+            while (divider < sqrtN) {
+                while (n % divider == 0) {
+                    dividers.add(_n / divider)
+                    n /= divider
+                }
+                if (divider == 2) divider++
+                else divider += 2
+            }
+            if (dividers.isEmpty()) {
+                dividers.add(1)
+            }
+            return dividers
+        }
+
     }
 }

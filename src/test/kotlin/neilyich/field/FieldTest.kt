@@ -12,7 +12,7 @@ open class FieldTest: UnitalRingTest() {
 
         var expectedDiscreteLog: Int? = null
         for (a in field) {
-            val actualDiscreteLog = a.discreteLogarithm()
+            val actualDiscreteLog = field.discreteLogarithm(a)
             assertEquals(expectedDiscreteLog, actualDiscreteLog)
             expectedDiscreteLog = (expectedDiscreteLog ?: -1) + 1
         }

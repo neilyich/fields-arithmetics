@@ -2,6 +2,7 @@ package neilyich.ring
 
 import neilyich.ring.element.UnitalRingElement
 
-abstract class UnitalRing<Element: UnitalRingElement>: Ring<Element>() {
-    abstract fun one(): Element
+interface UnitalRing<Element: UnitalRingElement>: Ring<Element> {
+    fun one(): Element
+    fun one(times: Int): Element
 }

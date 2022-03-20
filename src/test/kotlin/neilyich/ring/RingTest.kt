@@ -14,8 +14,8 @@ open class RingTest {
             elements.add(el)
         }
         // ring.size() unique elements
-        assertEquals(ring.size(), count)
-        assertEquals(ring.size(), elements.size)
+        assertEquals(ring.size(), count, "$ring")
+        assertEquals(ring.size(), elements.size, "$ring")
 
         // exists only one 0
         assertTrue(ring.zero().isZero())

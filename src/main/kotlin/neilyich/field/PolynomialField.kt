@@ -1,67 +1,46 @@
 package neilyich.field
 
 import neilyich.field.element.FieldElement
-import neilyich.field.element.PolynomialFieldElement
 import neilyich.field.polynomial.AFieldPolynomial
-import neilyich.field.polynomial.FieldPolynomial
-import neilyich.field.polynomial.ZeroPolynomial
+import neilyich.ring.PolynomialRing
 import neilyich.util.FieldPolynomialUtils
-import kotlin.math.pow
+import neilyich.util.pow
 
-abstract class PolynomialField<InnerFieldElement : FieldElement, PolynomialElement : PolynomialFieldElement<*, InnerFieldElement>>(
+abstract class PolynomialField<InnerFieldElement : FieldElement>(mod: AFieldPolynomial<InnerFieldElement>):
+    PolynomialRing<InnerFieldElement>(mod), Field<AFieldPolynomial<InnerFieldElement>> {
 
-    val mod: AFieldPolynomial<InnerFieldElement>
-): Field<PolynomialElement>() {
+    protected val primitiveElement: AFieldPolynomial<InnerFieldElement> = FieldPolynomialUtils.findPrimitiveElement(mod)
 
-    val literal = mod.literal
-    protected val innerField = mod.field
-    protected val primitiveElement: PolynomialElement by lazy {
-        createElement(FieldPolynomialUtils.findPrimitiveElement(mod), 1)
+    final override fun primitiveElement(): AFieldPolynomial<InnerFieldElement> = primitiveElement
+
+    final override fun iterator(): Iterator<AFieldPolynomial<InnerFieldElement>> {
+        return super<Field>.iterator()
     }
 
-    override fun primitiveElement(): PolynomialElement = primitiveElement
+    final override fun characteristics(): Int = innerField.characteristics()
+    final override fun extensionDegree(): Int = innerField.extensionDegree() * mod.degree()
+    final override fun size(): Int = innerField.size().pow(mod.degree())
 
-    override fun zero(): PolynomialElement = createElement(ZeroPolynomial(innerField, literal), null)
+    final override fun innerField(): Field<InnerFieldElement> = innerField
 
-    override fun one(): PolynomialElement = createElement(FieldPolynomial(innerField, mapOf(0 to innerField.one()), literal), 0)
+    final override fun contains(e: AFieldPolynomial<InnerFieldElement>): Boolean = e.field == innerField && e.degree() < mod.degree() && e.literal == literal
 
-    protected abstract fun getElementByPolynomial(_polynomial: AFieldPolynomial<InnerFieldElement>): PolynomialElement
+    final override fun toString(): String = "{ GF${characteristics()}^${extensionDegree()} ~ $innerField[$literal]/$mod, a=$primitiveElement }"
 
-    protected abstract fun createElement(_polynomial: AFieldPolynomial<InnerFieldElement>, discreteLogarithm: Int?): PolynomialElement
-
-    override fun add(lhs: PolynomialElement, rhs: PolynomialElement): PolynomialElement {
-        checkSameField(lhs, rhs)
-        return getElementByPolynomial((lhs.polynomial + rhs.polynomial) % mod)
-    }
-
-    fun mult(lhs: PolynomialElement, rhs: InnerFieldElement): PolynomialElement {
-        return getElementByPolynomial(lhs.polynomial.mult(rhs))
-    }
-
-    override fun inverseAdd(e: PolynomialElement): PolynomialElement {
-        checkSameField(e)
-        return getElementByPolynomial(-e.polynomial)
-    }
-
-    override fun characteristics(): Int = innerField.characteristics()
-    override fun extensionDegree(): Int = innerField.extensionDegree() * mod.degree()
-    override fun size(): Int = innerField.size().toDouble().pow(mod.degree()).toInt()
-
-    override fun equals(other: Any?): Boolean {
+    final override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is PolynomialField<*, *>) return false
+        if (other !is PolynomialField<*>) return false
+        if (!super.equals(other)) return false
 
-        if (mod != other.mod) return false
+        if (primitiveElement != other.primitiveElement) return false
 
         return true
     }
 
-    override fun hashCode(): Int = mod.hashCode()
-
-    override fun toString(): String = "{ GF${characteristics()}^${extensionDegree()} ~ $innerField[$literal]/($mod) }"
-
-    override fun innerField(): Field<InnerFieldElement> = innerField
-
-    override fun contains(e: PolynomialElement): Boolean = e.polynomial.field == innerField && e.polynomial.degree() < mod.degree() && e.polynomial.literal == literal
+    final override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + primitiveElement.hashCode()
+        return result
+    }
 
 }

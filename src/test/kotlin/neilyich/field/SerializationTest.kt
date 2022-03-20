@@ -2,9 +2,7 @@ package neilyich.field
 
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import neilyich.field.element.CachingPolynomialFieldElement
 import neilyich.field.element.FieldElement
-import neilyich.field.element.PrimeFieldElement
 import neilyich.field.polynomial.AFieldPolynomial
 import neilyich.field.polynomial.FieldPolynomial
 import neilyich.field.serialization.FieldsModule
@@ -26,18 +24,18 @@ class SerializationTest {
 
     @Test
     fun fieldSerializationTest() {
-        testSerializationAndDeserialization(PrimeField(31))
-        testSerializationAndDeserialization(FieldUtils.field(11, 3))
+        testFieldSerializationAndDeserialization(PrimeField(31))
+        testFieldSerializationAndDeserialization(FieldUtils.field(11, 3))
 
         val f0 = FieldUtils.primeField(5)
-        testSerializationAndDeserialization(f0)
+        testFieldSerializationAndDeserialization(f0)
         val f1 = FieldUtils.extend(f0, 4)
-        testSerializationAndDeserialization(f1)
+        testFieldSerializationAndDeserialization(f1)
         val f2 = FieldUtils.extend(f1, 2)
-        testSerializationAndDeserialization(f2)
+        testFieldSerializationAndDeserialization(f2)
     }
 
-    private fun testSerializationAndDeserialization(field: Field<out FieldElement>) {
+    private fun testFieldSerializationAndDeserialization(field: Field<out FieldElement>) {
         testSerializationAndDeserialization(field, Field::class.java)
     }
     
@@ -51,7 +49,7 @@ class SerializationTest {
         ).forEach { 
             testSerializationAndDeserialization(it)
         }
-        val g = FieldUtils.extend(f, 2) as CachingPolynomialField<CachingPolynomialFieldElement<PrimeFieldElement>>
+        val g = FieldUtils.extend(f, 2)
         listOf(
             FieldPolynomial(g, g.element(1), g.element(100), g.element(11)),
             FieldPolynomial(g, g.element(1), g.element(14), g.element(26)),
@@ -74,19 +72,19 @@ class SerializationTest {
             FieldPolynomial(f, f(1), f(14), f(2)),
             FieldPolynomial(f, f(1), f(6), f(8), f(2), f(10)),
         ).forEach {
-            testSerializationAndDeserialization(PolynomialRing(it))
+            testRingSerializationAndDeserialization(PolynomialRing(it))
         }
-        val g = FieldUtils.extend(f, 2) as CachingPolynomialField<CachingPolynomialFieldElement<PrimeFieldElement>>
+        val g = FieldUtils.extend(f, 2)
         listOf(
-            FieldPolynomial(g, g.element(1), g.element(100), g.element(11)),
-            FieldPolynomial(g, g.element(1), g.element(14), g.element(26)),
-            FieldPolynomial(g, g.element(150), g.element(65), g.element(8), g.element(72), g.element(144)),
+            FieldPolynomial(g, "y", g.element(1), g.element(100), g.element(11)),
+            FieldPolynomial(g, "y", g.element(1), g.element(14), g.element(26)),
+            FieldPolynomial(g, "y", g.element(150), g.element(65), g.element(8), g.element(72), g.element(144)),
         ).forEach {
-            testSerializationAndDeserialization(PolynomialRing(it))
+            testRingSerializationAndDeserialization(PolynomialRing(it))
         }
     }
 
-    private fun testSerializationAndDeserialization(ring: PolynomialRing<out FieldElement>) {
+    private fun testRingSerializationAndDeserialization(ring: PolynomialRing<out FieldElement>) {
         testSerializationAndDeserialization(ring, PolynomialRing::class.java)
     }
 
