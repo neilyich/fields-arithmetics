@@ -5,8 +5,9 @@ import neilyich.field.serialization.PolynomialRingDescription
 import neilyich.ring.PolynomialRing
 
 class PolynomialRingDescriptionFactoryImpl(
-    private val polynomialDescriptionFactory: PolynomialDescriptionFactory = PolynomialDescriptionFactoryImpl(),
-    private val fieldDescriptionFactory: FieldDescriptionFactory = FieldDescriptionFactoryImpl(polynomialDescriptionFactory)
+    private val fieldElementDescriptionFactory: FieldElementDescriptionFactory = FieldElementDescriptionFactoryImpl(),
+    private val polynomialDescriptionFactory: PolynomialDescriptionFactory = PolynomialDescriptionFactoryImpl(fieldElementDescriptionFactory),
+    private val fieldDescriptionFactory: FieldDescriptionFactory = FieldDescriptionFactoryImpl(fieldElementDescriptionFactory, polynomialDescriptionFactory)
 ): PolynomialRingDescriptionFactory {
 
     override fun createPolynomialRingDescription(ring: PolynomialRing<out FieldElement>): PolynomialRingDescription {

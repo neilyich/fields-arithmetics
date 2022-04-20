@@ -102,5 +102,43 @@ class NumberUtils {
             return dividers
         }
 
+        private fun powMinusOne(pow: Int): Int {
+            if (pow % 2 == 0) {
+                return 1
+            }
+            return -1
+        }
+
+        private fun jacobiSymbol2(pow2: Int, n: Int): Int {
+            if (pow2 % 2 == 0) {
+                return 1
+            }
+            if (n % 2 == 0) {
+                return 0
+            }
+            val nMod8 = n % 8
+            if (nMod8 == 1 || nMod8 == 7) {
+                return 1
+            }
+            return -1
+        }
+
+        fun jacobiSymbol(a: Int, n: Int): Int {
+            var v = mod(a, n)
+            var u = 0
+            while (v % 2 == 0) {
+                v /= 2
+                u++
+            }
+//            if (u == 0) {
+//                return powMinusOne((v - 1) * (n - 1) / 4) * jacobiSymbol(n, v)
+//            }
+            val coef = jacobiSymbol2(u, n) * powMinusOne((v - 1) * (n - 1) / 4)
+            if (v == 1) {
+                return coef
+            }
+            return coef * jacobiSymbol(n, v)
+        }
+
     }
 }

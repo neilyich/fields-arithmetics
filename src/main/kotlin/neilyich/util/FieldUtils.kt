@@ -3,6 +3,7 @@ package neilyich.util
 import neilyich.field.*
 import neilyich.field.element.FieldElement
 import neilyich.field.element.PrimeFieldElement
+import neilyich.field.polynomial.AFieldPolynomial
 import kotlin.math.ceil
 import kotlin.math.sqrt
 
@@ -21,16 +22,24 @@ class FieldUtils {
         }
 
         fun <AFieldElement: FieldElement> extend(field: Field<AFieldElement>, degree: Int): PolynomialField<AFieldElement> {
-            val literal: String = if (field is CachingPolynomialField<*>) {
+            val literal = findLiteral(field)
+            return field(FieldPolynomialUtils.findPrimitivePolynomial(field, degree, literal))
+        }
+
+        fun <AFieldElement: FieldElement> field(mod: AFieldPolynomial<AFieldElement>, maxCachingSize: Int? = null): PolynomialField<AFieldElement> {
+            val size = mod.field.size().pow(mod.degree())
+            if (size > (maxCachingSize ?: maxCachingFieldSize)) {
+                return NoCachePolynomialField(mod)
+            }
+            return CachingPolynomialField(mod)
+        }
+
+        private fun findLiteral(field: Field<*>): String {
+            return if (field is PolynomialField<*>) {
                 literals[literals.indexOf(field.literal) + 1].toString()
             } else {
                 literals[0].toString()
             }
-            val size = field.size().pow(degree)
-            if (size > maxCachingFieldSize) {
-                return NoCachePolynomialField(FieldPolynomialUtils.findPrimitivePolynomial(field, degree, literal))
-            }
-            return CachingPolynomialField(FieldPolynomialUtils.findPrimitivePolynomial(field, degree, literal))
         }
 
         fun <Element: FieldElement> calcDiscreteLogarithm(element: Element, field: Field<Element>): Int? {

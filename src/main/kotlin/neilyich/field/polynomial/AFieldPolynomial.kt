@@ -73,7 +73,7 @@ abstract class AFieldPolynomial<CoefsFieldElement: FieldElement>(val field: Fiel
 
         fun <CoefsFieldElement: FieldElement> fromString(str: String, coefsField: Field<CoefsFieldElement>, literal: String = "x"): AFieldPolynomial<CoefsFieldElement> {
             var builder = StringBuilder(str.removePrefix(START_POLYNOMIAL))
-            builder = StringBuilder(builder.removePrefix(END_POLYNOMIAL))
+            builder = StringBuilder(builder.removeSuffix(END_POLYNOMIAL))
             if (builder.length == 1 && builder.toString() == "0") {
                 return ZeroPolynomial(coefsField, literal)
             }
