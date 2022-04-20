@@ -11,9 +11,10 @@ import neilyich.field.element.FieldElement
 import neilyich.field.polynomial.AFieldPolynomial
 import neilyich.field.serialization.PolynomialDescription
 
-class PolynomialDeserializer(private val polynomialFactory: PolynomialFactory = PolynomialFactoryImpl(),
-                             private val fieldFactory: FieldFactory = FieldFactoryImpl(polynomialFactory)):
-    StdDeserializer<AFieldPolynomial<out FieldElement>>(AFieldPolynomial::class.java) {
+class PolynomialDeserializer(
+    private val polynomialFactory: PolynomialFactory = PolynomialFactoryImpl(),
+    private val fieldFactory: FieldFactory = FieldFactoryImpl(polynomialFactory)
+): StdDeserializer<AFieldPolynomial<out FieldElement>>(AFieldPolynomial::class.java) {
 
     override fun deserialize(jsonParser: JsonParser?, deserializationContext: DeserializationContext?): AFieldPolynomial<out FieldElement> {
         val polynomialDescription = deserializationContext?.readValue(jsonParser, PolynomialDescription::class.java)

@@ -207,8 +207,10 @@ class FieldPolynomialUtils {
             return extendedEuclidAlgorithm(a, b).third.normalized()
         }
 
-        fun <CoefsFieldElement: FieldElement> squareFreePolynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>): Set<AFieldPolynomial<CoefsFieldElement>> {
+        private fun <CoefsFieldElement: FieldElement> squareFreePolynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>, logger: (Any) -> Unit = {}): Set<AFieldPolynomial<CoefsFieldElement>> {
+            logger("making factorization of square free polynomial f(x) = $polynomial")
             if (polynomial.degree() == 1) {
+                logger("deg(f) = 1 => f(x) is only divided by itself")
                 return setOf(polynomial)
             }
             val n = polynomial.degree()
@@ -218,42 +220,51 @@ class FieldPolynomialUtils {
             var remaindersMatrix: AFieldMatrix<CoefsFieldElement> = ZeroFieldMatrix(field, n, 1)
             for (i in 1 until n) {
                 val xPowIQMinusXPowI = x(field, i * q, literal) - x(field, i, literal)
-                println(xPowIQMinusXPowI)
-                println(xPowIQMinusXPowI % polynomial)
+                logger("((x)^${i * q} - (x)^$i) % f(x) = ${xPowIQMinusXPowI % polynomial}")
                 remaindersMatrix = remaindersMatrix.concatRight(VFieldVector(field, (xPowIQMinusXPowI % polynomial).coefsList().reversed().startPad(n, field.zero())))
             }
-            println("Remainders matrix:\n$remaindersMatrix")
+            logger("Remainders matrix:\n$remaindersMatrix")
             val dividers = mutableSetOf(polynomial)
-            val basis = MatrixUtils.solve(remaindersMatrix)
+            val basis = MatrixUtils.solve(remaindersMatrix, logger)
+            logger("f(x) = $polynomial must have ${basis.size} dividers")
             if (basis.size == 1) {
+                logger("$polynomial is prime")
                 return setOf(polynomial)
             }
-            println("basis:\n$basis")
+            for (i in basis.indices) {
+                logger("e$i(x) = ${FieldPolynomial(field, basis[i].toList(), literal)}")
+            }
             for (i in 1 until basis.size) {
+                logger("current dividers set: $dividers")
                 val e = FieldPolynomial(field, basis[i].toList(), literal)
-                println("basis polynomial: $e")
                 val dividersTmp = dividers.toMutableSet()
                 while (dividersTmp.isNotEmpty()) {
                     var f = dividersTmp.iterator().next()
                     dividersTmp.remove(f)
+                    logger("calculating (F(x), e$i(x) - a) = ($f, $e - a)")
                     for (a in field) {
                         val d = GCD(f, e - constant(field, a, literal))
+                        logger("a = $a, (F(x), e$i(x) - a) = ($f, ${e - constant(field, a, literal)}) = $d")
                         if (d.degree() == 0) {
                             continue
                         }
                         if (d.degree() == f.degree()) {
                             break
                         }
+                        logger("remove F(x) = $f = $d * ${f / d} from dividers")
+                        logger("add $d and ${f / d} to dividers")
                         dividers.remove(f)
                         dividers.add(d)
                         dividers.add(f / d)
                         if (dividers.size == basis.size) {
+                            logger("found required ${basis.size} dividers")
                             return if (polynomial.isNormalized())
                                 dividers.map {
                                     it.normalized()
                                 }.toSet()
                             else dividers
                         }
+                        logger("F(x) = F(x) / $d = $f / $d = ${f / d}")
                         f /= d
                     }
                 }
@@ -261,47 +272,76 @@ class FieldPolynomialUtils {
             throw RuntimeException("Unable to make factorization of polynomial $polynomial")
         }
 
-        fun <CoefsFieldElement: FieldElement> polynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>): Map<AFieldPolynomial<CoefsFieldElement>, Int> {
+        fun <CoefsFieldElement: FieldElement> polynomialFactorization(polynomial: AFieldPolynomial<CoefsFieldElement>, logger: (Any) -> Unit = {}): Map<AFieldPolynomial<CoefsFieldElement>, Int> {
+            logger("making factorization of f(x) = $polynomial")
             val derivative = polynomial.derivative()
+            logger("derivative: f'(x) = $derivative")
             val dividersMultiplicityMap = mutableMapOf<AFieldPolynomial<CoefsFieldElement>, Int>()
             if (derivative.isZero()) {
                 if (polynomial.degree() == 0) {
+                    logger("f(x) = $polynomial is constant and is only divided by itself")
                     return mapOf(polynomial to 1)
                 }
                 val newGCoefs = polynomial.coefs().mapKeys { it.key / polynomial.field.size() }
-                val gFactorization = polynomialFactorization(FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal))
+                val newG = FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal)
+                logger("f'(x) = 0 => making factorization of f(x)^(1/${polynomial.field.size()}) = $newG")
+                val gFactorization = polynomialFactorization(newG, logger)
                 for ((fi, ni) in gFactorization) {
                     dividersMultiplicityMap[fi] = polynomial.field.size() * ni
                 }
                 return dividersMultiplicityMap
             }
-            println("calc dividers of $polynomial / ${GCD(polynomial, derivative)} = ${polynomial / GCD(polynomial, derivative)}")
-            val dividers = squareFreePolynomialFactorization(polynomial / GCD(polynomial, derivative))
-            println("dividers of $polynomial / ${GCD(polynomial, derivative)} = ${polynomial / GCD(polynomial, derivative)}: $dividers")
+            val gcd = GCD(polynomial, derivative)
+            logger("(f(x), f'(x)) = ($polynomial, $derivative) = $gcd")
+            val squareFreePolynomial = polynomial / gcd
+            logger("making factorization of square free polynomial: f(x) / (f(x), f'(x)) = $polynomial / $gcd = $squareFreePolynomial")
+            val dividers = squareFreePolynomialFactorization(squareFreePolynomial, logger)
+            logger("dividers of $squareFreePolynomial: $dividers")
             for (d in dividers) {
                 var nj = 1
                 var fnj = d.pow(nj + 1)
                 while ((polynomial % fnj).isZero()) {
+                    logger("$d^${nj + 1} = $fnj | $polynomial")
                     fnj *= d
                     nj++
                 }
+                logger("$d^${nj + 1} = $fnj !| $polynomial")
                 dividersMultiplicityMap[d] = nj
             }
             var fini: AFieldPolynomial<CoefsFieldElement> = OnePolynomial(polynomial.field, polynomial.literal)
             for ((fi, ni) in dividersMultiplicityMap) {
                 fini *= fi.pow(ni)
             }
+            val factorizationDescription = factorizationDescription(dividersMultiplicityMap)
+            logger("current factorization: f(x) = $polynomial = g(x) * $factorizationDescription = g(x) * $fini")
             val g = polynomial / fini
-            println("$polynomial / $fini = $g")
+            logger("g(x) = $polynomial / $fini = $g")
             if (g.degree() == 0) {
+                logger("g(x) = $g is constant => factorization completed: f(x) = $polynomial = $factorizationDescription")
                 return dividersMultiplicityMap
             }
             val newGCoefs = g.coefs().mapKeys { it.key / polynomial.field.size() }
-            val gFactorization = polynomialFactorization(FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal))
+            val newG = FieldPolynomial(polynomial.field, newGCoefs, polynomial.literal)
+            logger("g(x) = $g is not constant => making factorization of g(x)^(1/${polynomial.field.size()}) = $newG")
+            val gFactorization = polynomialFactorization(newG, logger)
+            logger("g(x)^(1/${polynomial.field.size()}) = $newG = ${factorizationDescription(gFactorization)}")
             for ((fi, ni) in gFactorization) {
                 dividersMultiplicityMap[fi] = polynomial.field.size() * ni
             }
+            logger("factorization completed: f(x) = g(x) * $fini = $polynomial = ${factorizationDescription(dividersMultiplicityMap)}")
             return dividersMultiplicityMap
+        }
+
+        fun <CoefsFieldElement: FieldElement> factorizationDescription(factorization: Map<AFieldPolynomial<CoefsFieldElement>, Int>): String {
+            val builder = StringBuilder()
+            for (pol in factorization.keys.sortedBy { it.degree() }) {
+                builder.append(pol.toString())
+                val pow = factorization[pol]!!
+                if(pow > 1) {
+                    builder.append("^").append(pow)
+                }
+            }
+            return builder.toString()
         }
     }
 }

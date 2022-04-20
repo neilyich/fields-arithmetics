@@ -10,7 +10,7 @@ class MatrixUtils {
             val basisColumnsNumbers: List<Int>
         )
 
-        private fun <Element: FieldElement> gaussAlgorithm(matrix: AFieldMatrix<Element>): GaussAlgorithmResult<Element> {
+        private fun <Element: FieldElement> gaussAlgorithm(matrix: AFieldMatrix<Element>, logger: (Any) -> Unit = {}): GaussAlgorithmResult<Element> {
             val w = matrix.width()
             val h = matrix.height()
             val field = matrix.field
@@ -26,31 +26,32 @@ class MatrixUtils {
                 }
                 firstElements.add(curCol)
                 val coef = field.inverseMult(nonZero.second)
-                println("($curCol) swap $curRow and ${nonZero.first}, coef=$coef:")
+                logger("($curCol) swap $curRow and ${nonZero.first}, $curRow *= $coef:")
                 curMatr = curMatr.swapRows(curRow, nonZero.first).multRow(curRow, coef)
-                println(curMatr)
+                logger(curMatr)
                 for (row in curRow + 1 until h) {
                     if (!curMatr[row, curCol].isZero()) {
-                        println("[$row] += [$curRow] * ${field.inverseAdd(curMatr[row, curCol])}")
+                        logger("[$row] += [$curRow] * ${field.inverseAdd(curMatr[row, curCol])}")
                         curMatr = curMatr.linearOperation(row, curRow, field.inverseAdd(curMatr[row, curCol]))
                     }
                 }
                 curRow++
                 curCol++
-                println(curMatr)
-                println()
+                logger(curMatr)
+                logger("\n")
             }
             val rank = firstElements.size
+            logger("basis columns: $firstElements, rank = $rank")
             curMatr = curMatr.splitDown(rank).first
             for (row in rank - 1 downTo 1) {
                 val column = firstElements[row]
                 for (r in 0 until row) {
                     if (!curMatr[r, column].isZero()) {
-                        println("[$r] += [$row] * ${field.inverseAdd(curMatr[r, column])}")
+                        logger("[$r] += [$row] * ${field.inverseAdd(curMatr[r, column])}")
                         curMatr = curMatr.linearOperation(r, row, field.inverseAdd(curMatr[r, column]))
                     }
                 }
-                println(curMatr)
+                logger(curMatr)
             }
             return GaussAlgorithmResult(curMatr, firstElements)
         }
@@ -64,11 +65,11 @@ class MatrixUtils {
             return null
         }
 
-        fun <Element: FieldElement> solve(matrix: AFieldMatrix<Element>): List<VFieldVector<Element>> {
+        fun <Element: FieldElement> solve(matrix: AFieldMatrix<Element>, logger: (Any) -> Unit = {}): List<VFieldVector<Element>> {
             val field = matrix.field
             val w = matrix.width()
             val solution = mutableListOf<VFieldVector<Element>>()
-            val gaussResult = gaussAlgorithm(matrix)
+            val gaussResult = gaussAlgorithm(matrix, logger)
             val basisColumns = gaussResult.basisColumnsNumbers.toHashSet()
             for (freeCol in 0 until w) {
                 if (basisColumns.contains(freeCol)) {
@@ -89,6 +90,7 @@ class MatrixUtils {
                 }
                 solution.add(VFieldVector(field, s))
             }
+            logger("kernel of matrix:\n$solution")
             return solution
         }
     }
